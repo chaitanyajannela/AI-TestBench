@@ -38,7 +38,7 @@ export default function ConnectChatbotWizard() {
     description: "Evaluates standard refund policies, confidentiality, and adversarial prompt injection resistance.",
     environment: "development",
     project_id: selectedProject?.id || "",
-    endpoint_url: "http://127.0.0.1:8001/chat",
+    endpoint_url: "https://ai-testbench.onrender.com/api/v1/sample-chatbot/chat",
     http_method: "POST",
     timeout_seconds: 20,
     authentication_type: "NONE",
@@ -51,6 +51,7 @@ export default function ConnectChatbotWizard() {
   const [testing, setTesting] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleNext = () => {
     if (currentStep < 7) setCurrentStep(currentStep + 1);
@@ -92,6 +93,7 @@ export default function ConnectChatbotWizard() {
 
   const handleFinish = async () => {
     setSubmitting(true);
+    setSubmitError(null);
     try {
       if (!testResult?.chatbot_id) {
         let reqMapping = { message: "message" };
@@ -109,7 +111,7 @@ export default function ConnectChatbotWizard() {
       }
       router.push("/chatbots");
     } catch (err: any) {
-      alert("Failed to save chatbot: " + err.message);
+      setSubmitError(err.message || "Failed to save chatbot");
     } finally {
       setSubmitting(false);
     }
@@ -217,7 +219,16 @@ export default function ConnectChatbotWizard() {
             </h2>
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-slate-300 block mb-1">Endpoint URL (HTTP or HTTPS) *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-slate-300 block">Endpoint URL (HTTP or HTTPS) *</label>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, endpoint_url: "https://ai-testbench.onrender.com/api/v1/sample-chatbot/chat", response_path: "reply" })}
+                    className="text-[11px] text-cyan-400 hover:text-cyan-300 underline font-medium"
+                  >
+                    ⚡ Use Built-in Live Chatbot
+                  </button>
+                </div>
                 <input
                   type="url"
                   value={formData.endpoint_url}
@@ -225,8 +236,21 @@ export default function ConnectChatbotWizard() {
                   placeholder="https://api.yourcompany.com/chat"
                   className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
                 />
+
+                {(formData.endpoint_url.includes("127.0.0.1") || formData.endpoint_url.includes("localhost")) && (
+                  <div className="mt-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded text-[11px] text-amber-300 space-y-1">
+                    <p className="font-semibold flex items-center gap-1">⚠️ Cloud SSRF Notice</p>
+                    <p>
+                      Because your backend is deployed on Render in the cloud, it cannot connect to <code>localhost</code> or <code>127.0.0.1</code> on your home computer.
+                    </p>
+                    <p>
+                      Click <strong className="cursor-pointer underline text-cyan-300" onClick={() => setFormData({ ...formData, endpoint_url: "https://ai-testbench.onrender.com/api/v1/sample-chatbot/chat", response_path: "reply" })}>Use Built-in Live Chatbot</strong> above, or provide a public URL / ngrok tunnel.
+                    </p>
+                  </div>
+                )}
+
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Tip: For testing, use the built-in sample chatbot at <code className="text-cyan-400">http://127.0.0.1:8001/chat</code>.
+                  Connect your company's REST chatbot, or use the built-in sample chatbot for instant testing.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -390,6 +414,27 @@ export default function ConnectChatbotWizard() {
             <h2 className="text-sm font-bold text-white flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Step 7: Ready to Save & Activate
             </h2>
+
+            {submitError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-xs text-rose-300 space-y-1.5">
+                <p className="font-semibold flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 text-rose-400" /> Registration Failed
+                </p>
+                <p>{submitError}</p>
+                {(formData.endpoint_url.includes("127.0.0.1") || formData.endpoint_url.includes("localhost")) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({ ...formData, endpoint_url: "https://ai-testbench.onrender.com/api/v1/sample-chatbot/chat", response_path: "reply" });
+                      setSubmitError(null);
+                    }}
+                    className="mt-2 inline-block px-3 py-1 bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 rounded text-xs hover:bg-cyan-600/50"
+                  >
+                    ⚡ Switch to Built-in Live Chatbot & Retry
+                  </button>
+                )}
+              </div>
+            )}
             <div className="bg-slate-950/60 p-4 rounded-lg border border-slate-800 text-xs space-y-2">
               <div className="flex justify-between">
                 <span className="text-slate-400">Chatbot Name:</span>

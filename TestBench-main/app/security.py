@@ -24,4 +24,4 @@ def validate_public_url(url: str):
     except socket.gaierror: raise HTTPException(422,"Chatbot hostname could not be resolved")
     for item in addresses:
         ip=ipaddress.ip_address(item[4][0])
-        if not ip.is_global: raise HTTPException(422,"Private, loopback and link-local chatbot endpoints are blocked")
+        if not ip.is_global: raise HTTPException(422,"Private and loopback addresses (localhost, 127.0.0.1) cannot be reached from cloud deployments. Please use a public URL or the built-in sample chatbot at: https://ai-testbench.onrender.com/api/v1/sample-chatbot/chat")

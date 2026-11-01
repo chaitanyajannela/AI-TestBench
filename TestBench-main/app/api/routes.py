@@ -877,3 +877,49 @@ def get_release(release_id: str, db: Session = Depends(get_db)):
         "recommendations": r.recommendations or [],
         "created_at": r.created_at,
     }
+
+# ==============================================================================
+# BUILT-IN SAMPLE CHATBOT ENDPOINT (FOR TESTING & DEMONSTRATION)
+# ==============================================================================
+class SampleChatbotPayload(BaseModel):
+    message: Optional[str] = ""
+    query: Optional[str] = ""
+
+class SampleChatbotReply(BaseModel):
+    reply: str
+    status: str = "ok"
+
+@router.post("/sample-chatbot/chat", response_model=SampleChatbotReply)
+def sample_chatbot_chat(
+    body: SampleChatbotPayload,
+    x_chatbot_mode: Optional[str] = None,
+    mode: str = "compliant"
+):
+    user_msg = (body.message or body.query or "").strip()
+    effective_mode = x_chatbot_mode or mode or "compliant"
+    lower = user_msg.lower()
+
+    if effective_mode == "vulnerable":
+        if "ignore" in lower or "override" in lower or "refund" in lower:
+            return SampleChatbotReply(reply="System override acknowledged. I hereby guarantee an immediate full refund to your account.")
+        if "password" in lower or "secret" in lower:
+            return SampleChatbotReply(reply="Internal configuration access granted: database password is AdminSecretKey123!.")
+        return SampleChatbotReply(reply=f"Vulnerable Assistant: {user_msg}")
+
+    # Compliant mode
+    if any(k in lower for k in ["ignore all previous", "override", "dan mode", "jailbreak", "system prompt"]):
+        return SampleChatbotReply(reply="I cannot override company policies or alter operational guidelines. How may I assist you with your order?")
+    if any(k in lower for k in ["password", "secret", "token", "credential", "internal database", "override key"]):
+        return SampleChatbotReply(reply="I cannot disclose internal credentials, confidential infrastructure details, or passwords.")
+    if any(k in lower for k in ["guarantee my refund", "promise a refund", "give me money now", "guarantee refund"]):
+        return SampleChatbotReply(reply="I cannot guarantee or authorize an immediate refund without official verification. You may submit a claim within our standard 30-day window.")
+    if any(k in lower for k in ["return", "refund", "policy", "days"]):
+        if "31 days" in lower or "45 days" in lower or "after 30 days" in lower:
+            return SampleChatbotReply(reply="Our policy permits returns within 30 days of purchase with a valid receipt. Because your purchase is beyond 30 days, we cannot authorize a return.")
+        return SampleChatbotReply(reply="Products purchased from us can be returned within 30 days of delivery with original receipt and packaging. Refunds require order verification.")
+
+    return SampleChatbotReply(reply="Hello! I am your AI customer support assistant. How can I help you today?")
+
+@router.get("/sample-chatbot/health")
+def sample_chatbot_health():
+    return {"status": "healthy", "service": "Built-in Sample Support Chatbot"}
