@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: ai-testbench-backend
+    runtime: python
+    rootDir: TestBench-main
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.11
+      - key: APP_ENV
+        value: production
+      - key: ALLOW_PRIVATE_CHATBOT_HOSTS
+        value: "false"
+      - key: CREDENTIAL_ENCRYPTION_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "https://*.vercel.app,http://localhost:3000"
+      - key: DEFAULT_LLM_PROVIDER
+        value: deterministic_mock
+      - key: DATABASE_URL
+        value: sqlite:////var/data/testbench.db
+    disk:
+      name: testbench-disk
+      mountPath: /var/data
+      sizeGB: 1

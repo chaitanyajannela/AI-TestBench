@@ -1,0 +1,4 @@
+# Optional open-source engines. Install only what you plan to use.
+deepeval>=3.0
+giskard[scan]>=2.0
+langfuse>=4.0

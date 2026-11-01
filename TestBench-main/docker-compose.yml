@@ -1,0 +1,16 @@
+services:
+  testbench-api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:////data/testbench.db
+      CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - testbench-data:/data
+    restart: unless-stopped
+
+volumes:
+  testbench-data:
